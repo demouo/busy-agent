@@ -1,0 +1,24 @@
+{
+  "delays": {
+    "thinking": {
+      "min": 2.0,
+      "max": 5.0,
+      "description": "思考延迟时间范围（秒）"
+    },
+    "executing": {
+      "min": 3.0,
+      "max": 6.0,
+      "description": "执行动作延迟时间范围（秒）"
+    }
+  },
+  "typewriter": {
+    "thought_speed": 0.02,
+    "action_speed": 0.015,
+    "observation_speed": 0.005,
+    "description": "打字机效果每个字符的延迟（秒）"
+  },
+  "display": {
+    "observation_max_length": 500,
+    "description": "观察内容的最大显示长度"
+  }
+}

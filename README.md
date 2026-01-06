@@ -59,6 +59,49 @@ python busy_agent.py --loop
 python busy_agent.py --loop --delay 5.0
 ```
 
+## 配置文件
+
+程序使用 `config.json` 配置文件来管理延迟时间和显示参数。你可以根据需要调整这些参数来控制 Agent 的"忙碌"程度。
+
+### 配置项说明
+
+**延迟时间配置** (`delays`):
+- `thinking.min` / `thinking.max`: 思考延迟时间范围（秒），默认 2.0-5.0 秒
+- `executing.min` / `executing.max`: 执行动作延迟时间范围（秒），默认 3.0-6.0 秒
+
+**打字机效果配置** (`typewriter`):
+- `thought_speed`: 思考内容的打字速度（每字符延迟），默认 0.02 秒
+- `action_speed`: 动作内容的打字速度，默认 0.015 秒
+- `observation_speed`: 观察内容的打字速度，默认 0.005 秒
+
+**显示配置** (`display`):
+- `observation_max_length`: 观察内容的最大显示长度，默认 500 字符
+
+### 配置示例
+
+```json
+{
+  "delays": {
+    "thinking": {
+      "min": 2.0,
+      "max": 5.0
+    },
+    "executing": {
+      "min": 3.0,
+      "max": 6.0
+    }
+  },
+  "typewriter": {
+    "thought_speed": 0.02,
+    "action_speed": 0.015,
+    "observation_speed": 0.005
+  },
+  "display": {
+    "observation_max_length": 500
+  }
+}
+```
+
 ## 输出示例
 
 程序会以 ReAct 风格输出 Agent 的推理过程：
@@ -91,6 +134,7 @@ Since 2017 Nick Ayers has been Chief of Staff to a man that served as governor o
 ```
 busy-agent/
 ├── busy_agent.py          # 主程序
+├── config.json            # 配置文件（延迟时间、打字速度等）
 ├── datasets/
 │   └── react-llama.parquet  # ReAct trajectory 数据集
 ├── explore_dataset.py     # 数据集探索脚本

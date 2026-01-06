@@ -9,6 +9,8 @@ import re
 import time
 import sys
 import random
+import json
+import os
 from typing import List, Dict
 
 
@@ -43,10 +45,53 @@ class Colors:
 class BusyAgent:
     """模拟忙碌的 ReAct Agent"""
 
-    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet'):
+    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet', config_path: str = 'config.json'):
         """初始化 Agent"""
         self.df = pd.read_parquet(dataset_path)
         print(f"✓ 加载了 {len(self.df)} 条 trajectory 数据")
+
+        # 加载配置文件
+        self.config = self._load_config(config_path)
+        print(f"✓ 加载配置文件: {config_path}")
+
+    def _load_config(self, config_path: str) -> dict:
+        """
+        加载配置文件
+
+        Args:
+            config_path: 配置文件路径
+
+        Returns:
+            配置字典
+        """
+        # 默认配置
+        default_config = {
+            "delays": {
+                "thinking": {"min": 2.0, "max": 5.0},
+                "executing": {"min": 3.0, "max": 6.0}
+            },
+            "typewriter": {
+                "thought_speed": 0.02,
+                "action_speed": 0.015,
+                "observation_speed": 0.005
+            },
+            "display": {
+                "observation_max_length": 500
+            }
+        }
+
+        # 尝试加载配置文件
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    return config
+            except Exception as e:
+                print(f"⚠️  配置文件加载失败，使用默认配置: {e}")
+                return default_config
+        else:
+            print(f"⚠️  配置文件不存在，使用默认配置")
+            return default_config
 
     def parse_trajectory(self, trajectory: str) -> List[Dict[str, str]]:
         """
@@ -79,8 +124,7 @@ class BusyAgent:
 
         return steps
 
-    @staticmethod
-    def typewriter_print(text: str, delay: float = 0.03, end: str = '\n'):
+    def typewriter_print(self, text: str, delay: float = 0.03, end: str = '\n'):
         """
         打字机效果打印文本
 
@@ -96,8 +140,7 @@ class BusyAgent:
         sys.stdout.write(end)
         sys.stdout.flush()
 
-    @staticmethod
-    def loading_animation(message: str, duration: float = 2.0):
+    def loading_animation(self, message: str, duration: float = 2.0):
         """
         显示加载动画
 
@@ -134,13 +177,16 @@ class BusyAgent:
         if step_type == 'thought':
             # 思考步骤
             if not fast_mode:
-                self.loading_animation('思考中...', duration=random.uniform(1.0, 2.0))
+                thinking_min = self.config['delays']['thinking']['min']
+                thinking_max = self.config['delays']['thinking']['max']
+                self.loading_animation('思考中...', duration=random.uniform(thinking_min, thinking_max))
 
             prefix = f"{Colors.BOLD}{Colors.BRIGHT_YELLOW}💭 Thought {step_number}:{Colors.RESET} "
             print(prefix, end='')
 
             if not fast_mode:
-                self.typewriter_print(content, delay=0.02)
+                thought_speed = self.config['typewriter']['thought_speed']
+                self.typewriter_print(content, delay=thought_speed)
             else:
                 print(content)
 
@@ -150,13 +196,16 @@ class BusyAgent:
             print(prefix, end='')
 
             if not fast_mode:
-                self.typewriter_print(content, delay=0.015)
+                action_speed = self.config['typewriter']['action_speed']
+                self.typewriter_print(content, delay=action_speed)
             else:
                 print(content)
 
             # 执行动作后的延迟
             if not fast_mode:
-                self.loading_animation('执行中...', duration=random.uniform(1.5, 2.5))
+                executing_min = self.config['delays']['executing']['min']
+                executing_max = self.config['delays']['executing']['max']
+                self.loading_animation('执行中...', duration=random.uniform(executing_min, executing_max))
 
         elif step_type == 'observation':
             # 观察步骤
@@ -164,13 +213,15 @@ class BusyAgent:
             print(prefix, end='')
 
             # Observation 通常很长，截断显示
-            if len(content) > 500 and not fast_mode:
-                display_content = content[:500] + '...'
+            max_length = self.config['display']['observation_max_length']
+            if len(content) > max_length and not fast_mode:
+                display_content = content[:max_length] + '...'
             else:
                 display_content = content
 
             if not fast_mode:
-                self.typewriter_print(display_content, delay=0.005)
+                observation_speed = self.config['typewriter']['observation_speed']
+                self.typewriter_print(display_content, delay=observation_speed)
             else:
                 print(display_content)
 
