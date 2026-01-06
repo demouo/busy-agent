@@ -19,8 +19,31 @@
 
 ## 安装
 
+### 方式一：从 PyPI 安装（推荐）
+
 ```bash
+pip install busy-agent
+```
+
+安装后可直接使用 `busy-agent` 命令。
+
+### 方式二：从源码安装
+
+```bash
+git clone https://github.com/demouo/busy-agent.git
+cd busy-agent
+pip install -e .
+```
+
+### 方式三：开发模式
+
+如果你想修改代码或贡献代码：
+
+```bash
+git clone https://github.com/demouo/busy-agent.git
+cd busy-agent
 pip install -r requirements.txt
+python busy_agent.py  # 直接运行脚本
 ```
 
 ## 使用方法
@@ -30,7 +53,7 @@ pip install -r requirements.txt
 运行程序，随机显示一个 trajectory：
 
 ```bash
-python busy_agent.py
+busy-agent
 ```
 
 ### 快速模式
@@ -38,7 +61,7 @@ python busy_agent.py
 跳过动画效果，快速显示（适合测试）：
 
 ```bash
-python busy_agent.py --fast
+busy-agent --fast
 ```
 
 ### 指定索引
@@ -46,7 +69,7 @@ python busy_agent.py --fast
 显示特定索引的 trajectory：
 
 ```bash
-python busy_agent.py --index 0
+busy-agent --index 0
 ```
 
 ### 循环模式
@@ -54,13 +77,13 @@ python busy_agent.py --index 0
 持续显示随机 trajectory，假装一直在忙：
 
 ```bash
-python busy_agent.py --loop
+busy-agent --loop
 ```
 
 自定义循环间隔时间（秒）：
 
 ```bash
-python busy_agent.py --loop --delay 5.0
+busy-agent --loop --delay 5.0
 ```
 
 ### 模型选择
@@ -69,17 +92,17 @@ python busy_agent.py --loop --delay 5.0
 
 **qwen-flash**（快速模型）：
 ```bash
-python busy_agent.py --model qwen-flash
+busy-agent --model qwen-flash
 ```
 
 **qwen-plus**（平衡模型，默认）：
 ```bash
-python busy_agent.py --model qwen-plus
+busy-agent --model qwen-plus
 ```
 
 **qwen-max**（最强模型）：
 ```bash
-python busy_agent.py --model qwen-max
+busy-agent --model qwen-max
 ```
 
 程序会在启动时显示当前使用的模型，不同模型使用不同颜色区分。
