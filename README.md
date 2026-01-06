@@ -59,11 +59,36 @@ python busy_agent.py --loop
 python busy_agent.py --loop --delay 5.0
 ```
 
+### 模型选择
+
+选择不同的 AI 模型（类似 Claude 的三档模型系统）：
+
+**qwen-flash**（快速模型）：
+```bash
+python busy_agent.py --model qwen-flash
+```
+
+**qwen-plus**（平衡模型，默认）：
+```bash
+python busy_agent.py --model qwen-plus
+```
+
+**qwen-max**（最强模型）：
+```bash
+python busy_agent.py --model qwen-max
+```
+
+程序会在启动时显示当前使用的模型，不同模型使用不同颜色区分。
+
 ## 配置文件
 
 程序使用 `config.json` 配置文件来管理延迟时间和显示参数。你可以根据需要调整这些参数来控制 Agent 的"忙碌"程度。
 
 ### 配置项说明
+
+**模型配置** (`model`):
+- `default`: 默认使用的模型，可选 `qwen-flash`、`qwen-plus`、`qwen-max`
+- `available_models`: 可用的模型列表及其配置
 
 **延迟时间配置** (`delays`):
 - `thinking.min` / `thinking.max`: 思考延迟时间范围（秒），默认 2.0-5.0 秒
@@ -81,6 +106,23 @@ python busy_agent.py --loop --delay 5.0
 
 ```json
 {
+  "model": {
+    "default": "qwen-plus",
+    "available_models": {
+      "qwen-flash": {
+        "display_name": "Qwen-Flash",
+        "tier": "flash"
+      },
+      "qwen-plus": {
+        "display_name": "Qwen-Plus",
+        "tier": "plus"
+      },
+      "qwen-max": {
+        "display_name": "Qwen-Max",
+        "tier": "max"
+      }
+    }
+  },
   "delays": {
     "thinking": {
       "min": 2.0,

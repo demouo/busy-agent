@@ -1,4 +1,25 @@
 {
+  "model": {
+    "default": "qwen-plus",
+    "description": "默认使用的模型",
+    "available_models": {
+      "qwen-flash": {
+        "display_name": "Qwen-Flash",
+        "description": "快速模型，响应迅速",
+        "tier": "flash"
+      },
+      "qwen-plus": {
+        "display_name": "Qwen-Plus",
+        "description": "平衡模型，性能与速度兼顾",
+        "tier": "plus"
+      },
+      "qwen-max": {
+        "display_name": "Qwen-Max",
+        "description": "最强模型，深度思考",
+        "tier": "max"
+      }
+    }
+  },
   "delays": {
     "thinking": {
       "min": 2.0,

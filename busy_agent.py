@@ -45,7 +45,7 @@ class Colors:
 class BusyAgent:
     """模拟忙碌的 ReAct Agent"""
 
-    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet', config_path: str = 'config.json'):
+    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet', config_path: str = 'config.json', model: str = None):
         """初始化 Agent"""
         self.df = pd.read_parquet(dataset_path)
         print(f"✓ 加载了 {len(self.df)} 条 trajectory 数据")
@@ -53,6 +53,10 @@ class BusyAgent:
         # 加载配置文件
         self.config = self._load_config(config_path)
         print(f"✓ 加载配置文件: {config_path}")
+
+        # 设置模型
+        self.model = model or self.config.get('model', {}).get('default', 'qwen-plus')
+        self._display_model_info()
 
     def _load_config(self, config_path: str) -> dict:
         """
@@ -66,6 +70,14 @@ class BusyAgent:
         """
         # 默认配置
         default_config = {
+            "model": {
+                "default": "qwen-plus",
+                "available_models": {
+                    "qwen-flash": {"display_name": "Qwen-Flash", "tier": "flash"},
+                    "qwen-plus": {"display_name": "Qwen-Plus", "tier": "plus"},
+                    "qwen-max": {"display_name": "Qwen-Max", "tier": "max"}
+                }
+            },
             "delays": {
                 "thinking": {"min": 2.0, "max": 5.0},
                 "executing": {"min": 3.0, "max": 6.0}
@@ -92,6 +104,29 @@ class BusyAgent:
         else:
             print(f"⚠️  配置文件不存在，使用默认配置")
             return default_config
+
+    def _display_model_info(self):
+        """显示当前使用的模型信息"""
+        models = self.config.get('model', {}).get('available_models', {})
+        model_info = models.get(self.model, {})
+
+        if model_info:
+            display_name = model_info.get('display_name', self.model)
+            tier = model_info.get('tier', 'unknown')
+
+            # 根据模型档位选择颜色
+            if tier == 'flash':
+                color = Colors.BRIGHT_CYAN
+            elif tier == 'plus':
+                color = Colors.BRIGHT_GREEN
+            elif tier == 'max':
+                color = Colors.BRIGHT_MAGENTA
+            else:
+                color = Colors.WHITE
+
+            print(f"{color}🤖 使用模型: {display_name}{Colors.RESET}")
+        else:
+            print(f"{Colors.YELLOW}🤖 使用模型: {self.model}{Colors.RESET}")
 
     def parse_trajectory(self, trajectory: str) -> List[Dict[str, str]]:
         """
@@ -281,11 +316,14 @@ def main():
     parser.add_argument('--fast', action='store_true', help='快速模式（跳过动画）')
     parser.add_argument('--loop', action='store_true', help='循环模式（持续显示随机 trajectory）')
     parser.add_argument('--delay', type=float, default=3.0, help='循环模式下每次之间的延迟（秒）')
+    parser.add_argument('--model', type=str, default=None,
+                        choices=['qwen-flash', 'qwen-plus', 'qwen-max'],
+                        help='选择模型：qwen-flash（快速）、qwen-plus（平衡）、qwen-max（最强）')
 
     args = parser.parse_args()
 
     # 创建 Agent
-    agent = BusyAgent()
+    agent = BusyAgent(model=args.model)
 
     if args.loop:
         # 循环模式
