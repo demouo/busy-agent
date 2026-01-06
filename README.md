@@ -6,6 +6,8 @@
 
 这是一个有趣的项目，通过读取 react-llama 数据集的 trajectory，以 ReAct Agent 的风格逐步打印 Agent 的思考和执行过程，让你看起来像是在运行一个真实的 AI Agent。
 
+![Show](assets/busy-agent.gif)
+
 ## 特性
 
 - 🎨 **彩色输出**: 使用 ANSI 颜色代码，让输出更加美观

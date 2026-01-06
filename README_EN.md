@@ -6,6 +6,8 @@ Pretend to be busy in the LLM Agent era!
 
 This is a fun project that reads trajectories from the react-llama dataset and prints the Agent's thinking and execution process in ReAct Agent style, making you look like you're running a real AI Agent.
 
+![Show](assets/busy-agent.gif)
+
 ## Features
 
 - 🎨 **Colorful Output**: Uses ANSI color codes for beautiful terminal output
