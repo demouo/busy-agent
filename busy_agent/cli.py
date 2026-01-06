@@ -12,9 +12,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Busy Agent - 模拟 ReAct Agent 工作过程')
-    parser.add_argument('--index', type=int, default=None, help='指定要显示的 trajectory 索引')
+    parser.add_argument('--index', type=int, default=None, help='指定要显示的 trajectory 索引（自动进入单次模式）')
+    parser.add_argument('--once', action='store_true', help='单次运行模式（默认为循环模式）')
     parser.add_argument('--fast', action='store_true', help='快速模式（跳过动画）')
-    parser.add_argument('--loop', action='store_true', help='循环模式（持续显示随机 trajectory）')
     parser.add_argument('--delay', type=float, default=3.0, help='循环模式下每次之间的延迟（秒）')
     parser.add_argument('--model', type=str, default=None,
                         choices=['qwen-flash', 'qwen-plus', 'qwen-max'],
@@ -28,8 +28,12 @@ def main():
     # 创建 Agent
     agent = BusyAgent(model=args.model, language=args.language)
 
-    if args.loop:
-        # 循环模式
+    # 如果指定了 index 或 once，进入单次模式；否则默认循环模式
+    if args.once or args.index is not None:
+        # 单次运行
+        agent.run(index=args.index, fast_mode=args.fast)
+    else:
+        # 循环模式（默认）
         print(f"{Colors.BRIGHT_CYAN}{agent._t('loop_mode_started')}{Colors.RESET}\n")
         try:
             while True:
@@ -37,9 +41,6 @@ def main():
                 time.sleep(args.delay)
         except KeyboardInterrupt:
             print(f"\n{Colors.BRIGHT_YELLOW}{agent._t('exited')}{Colors.RESET}")
-    else:
-        # 单次运行
-        agent.run(index=args.index, fast_mode=args.fast)
 
 
 if __name__ == '__main__':

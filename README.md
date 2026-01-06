@@ -50,10 +50,18 @@ python busy_agent.py  # 直接运行脚本
 
 ### 基本使用
 
-运行程序，随机显示一个 trajectory：
+运行程序，持续显示随机 trajectory（默认循环模式）：
 
 ```bash
 busy-agent
+```
+
+### 单次运行模式
+
+显示一次 trajectory 后退出：
+
+```bash
+busy-agent --once
 ```
 
 ### 快速模式
@@ -66,24 +74,18 @@ busy-agent --fast
 
 ### 指定索引
 
-显示特定索引的 trajectory：
+显示特定索引的 trajectory（自动进入单次模式）：
 
 ```bash
 busy-agent --index 0
 ```
 
-### 循环模式
-
-持续显示随机 trajectory，假装一直在忙：
-
-```bash
-busy-agent --loop
-```
+### 循环模式设置
 
 自定义循环间隔时间（秒）：
 
 ```bash
-busy-agent --loop --delay 5.0
+busy-agent --delay 5.0
 ```
 
 ### 模型选择
@@ -113,13 +115,16 @@ busy-agent --model qwen-max
 
 ### 配置项说明
 
+**语言配置** (`language`):
+- `default`: 默认语言，可选 `zh` (中文) 或 `en` (English)，默认 `en`
+
 **模型配置** (`model`):
 - `default`: 默认使用的模型，可选 `qwen-flash`、`qwen-plus`、`qwen-max`
 - `available_models`: 可用的模型列表及其配置
 
 **延迟时间配置** (`delays`):
-- `thinking.min` / `thinking.max`: 思考延迟时间范围（秒），默认 2.0-5.0 秒
-- `executing.min` / `executing.max`: 执行动作延迟时间范围（秒），默认 3.0-6.0 秒
+- `thinking.min` / `thinking.max`: 思考延迟时间范围（秒），默认 4.0-10.0 秒
+- `executing.min` / `executing.max`: 执行动作延迟时间范围（秒），默认 6.0-12.0 秒
 
 **打字机效果配置** (`typewriter`):
 - `thought_speed`: 思考内容的打字速度（每字符延迟），默认 0.02 秒
@@ -136,15 +141,15 @@ busy-agent --model qwen-max
 **意外事件配置** (`incidents`):
 - `model_disconnect`: 模型断连配置
   - `enabled`: 是否启用，默认 true
-  - `probability`: 触发概率，默认 0.15 (15%)
-  - `max_retries`: 最大重试次数，默认 2
+  - `probability`: 触发概率，默认 0.03 (3%)
+  - `max_retries`: 最大重试次数，默认 8
 - `action_timeout`: 动作超时配置
   - `enabled`: 是否启用，默认 true
-  - `probability`: 触发概率，默认 0.1 (10%)
-  - `max_retries`: 最大重试次数，默认 3
+  - `probability`: 触发概率，默认 0.02 (2%)
+  - `max_retries`: 最大重试次数，默认 8
 
 **成功率配置** (`success_rate`):
-- `target_rate`: 目标成功率，默认 0.75 (75%)
+- `target_rate`: 目标成功率，默认 0.60 (60%)
 - `incident_penalty`: 意外惩罚系数，默认 0.3 (发生意外时增加30%失败概率)
 - `wrong_answer_strategies`: 错误答案生成策略
   - `unable_to_determine`: 无法确定类答案（权重 0.4）

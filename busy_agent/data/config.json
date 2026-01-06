@@ -1,6 +1,6 @@
 {
     "language": {
-        "default": "zh",
+        "default": "en",
         "description": "界面语言：zh (中文) 或 en (English)"
     },
     "model": {
@@ -26,13 +26,13 @@
     },
     "delays": {
         "thinking": {
-            "min": 2.0,
-            "max": 5.0,
+            "min": 4.0,
+            "max": 10.0,
             "description": "思考延迟时间范围（秒）"
         },
         "executing": {
-            "min": 3.0,
-            "max": 6.0,
+            "min": 6.0,
+            "max": 12.0,
             "description": "执行动作延迟时间范围（秒）"
         }
     },
@@ -71,19 +71,19 @@
     "incidents": {
         "model_disconnect": {
             "enabled": true,
-            "probability": 0.15,
-            "max_retries": 2,
+            "probability": 0.03,
+            "max_retries": 8,
             "description": "模型断连概率和最大重试次数"
         },
         "action_timeout": {
             "enabled": true,
-            "probability": 0.1,
-            "max_retries": 3,
+            "probability": 0.02,
+            "max_retries": 8,
             "description": "动作超时概率和最大重试次数"
         }
     },
     "success_rate": {
-        "target_rate": 0.75,
+        "target_rate": 0.60,
         "incident_penalty": 0.3,
         "description": "目标成功率和意外惩罚系数",
         "wrong_answer_strategies": {
