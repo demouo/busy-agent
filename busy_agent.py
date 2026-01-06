@@ -54,9 +54,8 @@ class BusyAgent:
         self.config = self._load_config(config_path)
         print(f"✓ 加载配置文件: {config_path}")
 
-        # 设置模型
+        # 设置模型（保留用于未来扩展）
         self.model = model or self.config.get('model', {}).get('default', 'qwen-plus')
-        self._display_model_info()
 
     def _load_config(self, config_path: str) -> dict:
         """
@@ -210,13 +209,15 @@ class BusyAgent:
         content = step['content']
 
         if step_type == 'thought':
-            # 思考步骤
+            # 思考步骤 - 使用 Plus 模型
             if not fast_mode:
                 thinking_min = self.config['delays']['thinking']['min']
                 thinking_max = self.config['delays']['thinking']['max']
                 self.loading_animation('思考中...', duration=random.uniform(thinking_min, thinking_max))
 
-            prefix = f"{Colors.BOLD}{Colors.BRIGHT_YELLOW}💭 Thought {step_number}:{Colors.RESET} "
+            # 显示模型标签和步骤
+            model_tag = f"{Colors.BRIGHT_GREEN}(Qwen-Plus){Colors.RESET} "
+            prefix = f"{model_tag}{Colors.BOLD}{Colors.BRIGHT_YELLOW}💭 Thought {step_number}:{Colors.RESET} "
             print(prefix, end='')
 
             if not fast_mode:
@@ -226,8 +227,10 @@ class BusyAgent:
                 print(content)
 
         elif step_type == 'action':
-            # 动作步骤
-            prefix = f"{Colors.BOLD}{Colors.BRIGHT_GREEN}⚡ Action {step_number}:{Colors.RESET} "
+            # 动作步骤 - 系统执行
+            # 显示系统标签和步骤
+            system_tag = f"{Colors.BRIGHT_BLUE}(System){Colors.RESET} "
+            prefix = f"{system_tag}{Colors.BOLD}{Colors.BRIGHT_GREEN}⚡ Action {step_number}:{Colors.RESET} "
             print(prefix, end='')
 
             if not fast_mode:
@@ -243,8 +246,15 @@ class BusyAgent:
                 self.loading_animation('执行中...', duration=random.uniform(executing_min, executing_max))
 
         elif step_type == 'observation':
-            # 观察步骤
-            prefix = f"{Colors.BRIGHT_CYAN}📊 Observation {step_number}:{Colors.RESET} "
+            # 观察步骤 - 根据内容长度选择模型
+            # 短内容用 Flash，长内容用 Plus
+            content_length_threshold = 200
+            if len(content) < content_length_threshold:
+                model_tag = f"{Colors.BRIGHT_CYAN}(Qwen-Flash){Colors.RESET} "
+            else:
+                model_tag = f"{Colors.BRIGHT_GREEN}(Qwen-Plus){Colors.RESET} "
+
+            prefix = f"{model_tag}{Colors.BRIGHT_CYAN}📊 Observation {step_number}:{Colors.RESET} "
             print(prefix, end='')
 
             # Observation 通常很长，截断显示
