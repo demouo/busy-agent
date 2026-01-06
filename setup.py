@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 import os
 
 # Read README for long description
-with open('README.md', 'r', encoding='utf-8') as f:
+with open('README_FULL.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 # Read requirements
@@ -16,7 +16,7 @@ with open('requirements.txt', 'r', encoding='utf-8') as f:
 
 setup(
     name='busy-agent',
-    version='0.1.0',
+    version='0.1.1',
     author='Busy Agent Contributors',
     author_email='',
     description='模拟 ReAct Agent 工作过程 - Simulate ReAct Agent working process',
