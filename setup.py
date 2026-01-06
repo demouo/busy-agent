@@ -16,7 +16,7 @@ with open('requirements.txt', 'r', encoding='utf-8') as f:
 
 setup(
     name='busy-agent',
-    version='0.1.2',
+    version='0.1.3',
     author='Busy Agent Contributors',
     author_email='',
     description='模拟 ReAct Agent 工作过程 - Simulate ReAct Agent working process',
