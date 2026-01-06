@@ -41,5 +41,19 @@
   "display": {
     "observation_max_length": 500,
     "description": "观察内容的最大显示长度"
+  },
+  "incidents": {
+    "model_disconnect": {
+      "enabled": true,
+      "probability": 0.15,
+      "max_retries": 2,
+      "description": "模型断连概率和最大重试次数"
+    },
+    "action_timeout": {
+      "enabled": true,
+      "probability": 0.1,
+      "max_retries": 3,
+      "description": "动作超时概率和最大重试次数"
+    }
   }
 }

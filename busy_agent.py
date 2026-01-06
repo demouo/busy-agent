@@ -196,6 +196,94 @@ class BusyAgent:
         sys.stdout.write('\r' + ' ' * (len(message) + 3) + '\r')
         sys.stdout.flush()
 
+    def simulate_model_disconnect(self, model_name: str, fast_mode: bool = False) -> bool:
+        """
+        模拟模型断连和重试
+
+        Args:
+            model_name: 模型名称
+            fast_mode: 是否快速模式
+
+        Returns:
+            是否最终成功
+        """
+        incidents_config = self.config.get('incidents', {})
+        disconnect_config = incidents_config.get('model_disconnect', {})
+
+        if not disconnect_config.get('enabled', False):
+            return True
+
+        # 根据概率决定是否触发断连
+        if random.random() > disconnect_config.get('probability', 0):
+            return True
+
+        # 触发断连
+        max_retries = disconnect_config.get('max_retries', 2)
+
+        for retry in range(max_retries):
+            print(f"\n{Colors.RED}⚠️  模型断连: {model_name} 连接失败{Colors.RESET}")
+
+            if not fast_mode:
+                time.sleep(random.uniform(0.5, 1.0))
+
+            print(f"{Colors.YELLOW}🔄 重试中... (尝试 {retry + 1}/{max_retries}){Colors.RESET}")
+
+            if not fast_mode:
+                time.sleep(random.uniform(1.0, 2.0))
+
+            # 重试成功（80%概率）
+            if random.random() < 0.8:
+                print(f"{Colors.GREEN}✓ 重新连接成功{Colors.RESET}\n")
+                return True
+
+        # 所有重试都失败
+        print(f"{Colors.RED}✗ 连接失败，跳过此步骤{Colors.RESET}\n")
+        return False
+
+    def simulate_action_timeout(self, action_content: str, fast_mode: bool = False) -> bool:
+        """
+        模拟动作超时和重试
+
+        Args:
+            action_content: 动作内容
+            fast_mode: 是否快速模式
+
+        Returns:
+            是否最终成功
+        """
+        incidents_config = self.config.get('incidents', {})
+        timeout_config = incidents_config.get('action_timeout', {})
+
+        if not timeout_config.get('enabled', False):
+            return True
+
+        # 根据概率决定是否触发超时
+        if random.random() > timeout_config.get('probability', 0):
+            return True
+
+        # 触发超时
+        max_retries = timeout_config.get('max_retries', 3)
+
+        for retry in range(max_retries):
+            print(f"\n{Colors.RED}⏱️  动作超时: 执行时间过长{Colors.RESET}")
+
+            if not fast_mode:
+                time.sleep(random.uniform(0.5, 1.0))
+
+            print(f"{Colors.YELLOW}🔄 重试中... (尝试 {retry + 1}/{max_retries}){Colors.RESET}")
+
+            if not fast_mode:
+                time.sleep(random.uniform(1.5, 3.0))
+
+            # 重试成功（70%概率）
+            if random.random() < 0.7:
+                print(f"{Colors.GREEN}✓ 执行成功{Colors.RESET}\n")
+                return True
+
+        # 所有重试都失败
+        print(f"{Colors.RED}✗ 执行失败，跳过此动作{Colors.RESET}\n")
+        return False
+
     def print_step(self, step: Dict[str, str], fast_mode: bool = False):
         """
         打印单个步骤
@@ -214,6 +302,10 @@ class BusyAgent:
                 thinking_min = self.config['delays']['thinking']['min']
                 thinking_max = self.config['delays']['thinking']['max']
                 self.loading_animation('思考中...', duration=random.uniform(thinking_min, thinking_max))
+
+            # 模拟模型断连
+            if not self.simulate_model_disconnect('Qwen-Plus', fast_mode):
+                return
 
             # 显示模型标签和步骤
             model_tag = f"{Colors.BRIGHT_GREEN}(Qwen-Plus){Colors.RESET} "
@@ -239,6 +331,10 @@ class BusyAgent:
             else:
                 print(content)
 
+            # 模拟动作超时
+            if not self.simulate_action_timeout(content, fast_mode):
+                return
+
             # 执行动作后的延迟
             if not fast_mode:
                 executing_min = self.config['delays']['executing']['min']
@@ -250,9 +346,15 @@ class BusyAgent:
             # 短内容用 Flash，长内容用 Plus
             content_length_threshold = 200
             if len(content) < content_length_threshold:
+                model_name = 'Qwen-Flash'
                 model_tag = f"{Colors.BRIGHT_CYAN}(Qwen-Flash){Colors.RESET} "
             else:
+                model_name = 'Qwen-Plus'
                 model_tag = f"{Colors.BRIGHT_GREEN}(Qwen-Plus){Colors.RESET} "
+
+            # 模拟模型断连
+            if not self.simulate_model_disconnect(model_name, fast_mode):
+                return
 
             prefix = f"{model_tag}{Colors.BRIGHT_CYAN}📊 Observation {step_number}:{Colors.RESET} "
             print(prefix, end='')
