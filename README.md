@@ -1,5 +1,7 @@
 # Busy Agent 🤖
 
+[English](README_EN.md) | 中文
+
 在 LLM Agent 时代假装很忙！
 
 这是一个有趣的项目，通过读取 react-llama 数据集的 trajectory，以 ReAct Agent 的风格逐步打印 Agent 的思考和执行过程，让你看起来像是在运行一个真实的 AI Agent。
