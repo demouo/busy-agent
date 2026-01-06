@@ -42,20 +42,86 @@ class Colors:
     BRIGHT_WHITE = '\033[97m'
 
 
+# 语言字典
+LANGUAGES = {
+    'zh': {
+        'loaded_data': '✓ 加载了 {count} 条 trajectory 数据',
+        'loaded_config': '✓ 加载配置文件: {path}',
+        'config_load_failed': '⚠️  配置文件加载失败，使用默认配置: {error}',
+        'config_not_found': '⚠️  配置文件不存在，使用默认配置',
+        'thinking': '思考中...',
+        'executing': '执行中...',
+        'model_disconnect': '⚠️  模型断连: {model} 连接失败',
+        'retrying': '🔄 重试中... (尝试 {current}/{max})',
+        'reconnect_success': '✓ 重新连接成功',
+        'connect_failed': '✗ 连接失败，跳过此步骤',
+        'action_timeout': '⏱️  动作超时: 执行时间过长',
+        'execution_success': '✓ 执行成功',
+        'execution_failed': '✗ 执行失败，跳过此动作',
+        'agent_working': '🤖 ReAct Agent 工作中...',
+        'question': '❓ 问题:',
+        'start_reasoning': '🔄 开始推理过程...',
+        'final_answer': '✅ 最终答案: {answer}',
+        'loop_mode_started': '🔄 循环模式已启动，按 Ctrl+C 退出',
+        'exited': '👋 已退出',
+    },
+    'en': {
+        'loaded_data': '✓ Loaded {count} trajectory data',
+        'loaded_config': '✓ Loaded config file: {path}',
+        'config_load_failed': '⚠️  Failed to load config, using defaults: {error}',
+        'config_not_found': '⚠️  Config file not found, using defaults',
+        'thinking': 'Thinking...',
+        'executing': 'Executing...',
+        'model_disconnect': '⚠️  Model disconnected: {model} connection failed',
+        'retrying': '🔄 Retrying... (attempt {current}/{max})',
+        'reconnect_success': '✓ Reconnected successfully',
+        'connect_failed': '✗ Connection failed, skipping this step',
+        'action_timeout': '⏱️  Action timeout: execution took too long',
+        'execution_success': '✓ Execution successful',
+        'execution_failed': '✗ Execution failed, skipping this action',
+        'agent_working': '🤖 ReAct Agent Working...',
+        'question': '❓ Question:',
+        'start_reasoning': '🔄 Starting reasoning process...',
+        'final_answer': '✅ Final Answer: {answer}',
+        'loop_mode_started': '🔄 Loop mode started, press Ctrl+C to exit',
+        'exited': '👋 Exited',
+    }
+}
+
+
 class BusyAgent:
     """模拟忙碌的 ReAct Agent"""
 
-    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet', config_path: str = 'config.json', model: str = None):
+    def __init__(self, dataset_path: str = 'datasets/react-llama.parquet', config_path: str = 'config.json', model: str = None, language: str = None):
         """初始化 Agent"""
         self.df = pd.read_parquet(dataset_path)
-        print(f"✓ 加载了 {len(self.df)} 条 trajectory 数据")
 
         # 加载配置文件
         self.config = self._load_config(config_path)
-        print(f"✓ 加载配置文件: {config_path}")
+
+        # 设置语言
+        self.language = language or self.config.get('language', {}).get('default', 'zh')
+
+        # 输出加载信息
+        print(self._t('loaded_data', count=len(self.df)))
+        print(self._t('loaded_config', path=config_path))
 
         # 设置模型（保留用于未来扩展）
         self.model = model or self.config.get('model', {}).get('default', 'qwen-plus')
+
+    def _t(self, key: str, **kwargs) -> str:
+        """
+        获取翻译文本
+
+        Args:
+            key: 文本键
+            **kwargs: 格式化参数
+
+        Returns:
+            翻译后的文本
+        """
+        text = LANGUAGES.get(self.language, LANGUAGES['zh']).get(key, key)
+        return text.format(**kwargs) if kwargs else text
 
     def _load_config(self, config_path: str) -> dict:
         """
@@ -221,23 +287,23 @@ class BusyAgent:
         max_retries = disconnect_config.get('max_retries', 2)
 
         for retry in range(max_retries):
-            print(f"\n{Colors.RED}⚠️  模型断连: {model_name} 连接失败{Colors.RESET}")
+            print(f"\n{Colors.RED}{self._t('model_disconnect', model=model_name)}{Colors.RESET}")
 
             if not fast_mode:
                 time.sleep(random.uniform(0.5, 1.0))
 
-            print(f"{Colors.YELLOW}🔄 重试中... (尝试 {retry + 1}/{max_retries}){Colors.RESET}")
+            print(f"{Colors.YELLOW}{self._t('retrying', current=retry + 1, max=max_retries)}{Colors.RESET}")
 
             if not fast_mode:
                 time.sleep(random.uniform(1.0, 2.0))
 
             # 重试成功（80%概率）
             if random.random() < 0.8:
-                print(f"{Colors.GREEN}✓ 重新连接成功{Colors.RESET}\n")
+                print(f"{Colors.GREEN}{self._t('reconnect_success')}{Colors.RESET}\n")
                 return True
 
         # 所有重试都失败
-        print(f"{Colors.RED}✗ 连接失败，跳过此步骤{Colors.RESET}\n")
+        print(f"{Colors.RED}{self._t('connect_failed')}{Colors.RESET}\n")
         return False
 
     def simulate_action_timeout(self, action_content: str, fast_mode: bool = False) -> bool:
@@ -265,23 +331,23 @@ class BusyAgent:
         max_retries = timeout_config.get('max_retries', 3)
 
         for retry in range(max_retries):
-            print(f"\n{Colors.RED}⏱️  动作超时: 执行时间过长{Colors.RESET}")
+            print(f"\n{Colors.RED}{self._t('action_timeout')}{Colors.RESET}")
 
             if not fast_mode:
                 time.sleep(random.uniform(0.5, 1.0))
 
-            print(f"{Colors.YELLOW}🔄 重试中... (尝试 {retry + 1}/{max_retries}){Colors.RESET}")
+            print(f"{Colors.YELLOW}{self._t('retrying', current=retry + 1, max=max_retries)}{Colors.RESET}")
 
             if not fast_mode:
                 time.sleep(random.uniform(1.5, 3.0))
 
             # 重试成功（70%概率）
             if random.random() < 0.7:
-                print(f"{Colors.GREEN}✓ 执行成功{Colors.RESET}\n")
+                print(f"{Colors.GREEN}{self._t('execution_success')}{Colors.RESET}\n")
                 return True
 
         # 所有重试都失败
-        print(f"{Colors.RED}✗ 执行失败，跳过此动作{Colors.RESET}\n")
+        print(f"{Colors.RED}{self._t('execution_failed')}{Colors.RESET}\n")
         return False
 
     def print_step(self, step: Dict[str, str], fast_mode: bool = False):
@@ -301,7 +367,7 @@ class BusyAgent:
             if not fast_mode:
                 thinking_min = self.config['delays']['thinking']['min']
                 thinking_max = self.config['delays']['thinking']['max']
-                self.loading_animation('思考中...', duration=random.uniform(thinking_min, thinking_max))
+                self.loading_animation(self._t('thinking'), duration=random.uniform(thinking_min, thinking_max))
 
             # 模拟模型断连
             if not self.simulate_model_disconnect('Qwen-Plus', fast_mode):
@@ -339,7 +405,7 @@ class BusyAgent:
             if not fast_mode:
                 executing_min = self.config['delays']['executing']['min']
                 executing_max = self.config['delays']['executing']['max']
-                self.loading_animation('执行中...', duration=random.uniform(executing_min, executing_max))
+                self.loading_animation(self._t('executing'), duration=random.uniform(executing_min, executing_max))
 
         elif step_type == 'observation':
             # 观察步骤 - 根据内容长度选择模型
@@ -393,11 +459,11 @@ class BusyAgent:
 
         # 显示标题
         print(f"\n{Colors.BOLD}{Colors.BRIGHT_MAGENTA}{'=' * 80}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}🤖 ReAct Agent 工作中...{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}{self._t('agent_working')}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}{'=' * 80}{Colors.RESET}\n")
 
         # 显示问题
-        print(f"{Colors.BOLD}{Colors.BRIGHT_WHITE}❓ 问题:{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.BRIGHT_WHITE}{self._t('question')}{Colors.RESET}")
         print(f"{Colors.WHITE}{question}{Colors.RESET}\n")
 
         # 解析 trajectory
@@ -408,14 +474,14 @@ class BusyAgent:
             return
 
         # 逐步打印
-        print(f"{Colors.BOLD}{Colors.BRIGHT_WHITE}🔄 开始推理过程...{Colors.RESET}\n")
+        print(f"{Colors.BOLD}{Colors.BRIGHT_WHITE}{self._t('start_reasoning')}{Colors.RESET}\n")
 
         for step in steps:
             self.print_step(step, fast_mode=fast_mode)
 
         # 显示最终答案
         print(f"\n{Colors.BOLD}{Colors.BRIGHT_GREEN}{'=' * 80}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}✅ 最终答案: {correct_answer}{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{self._t('final_answer', answer=correct_answer)}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{'=' * 80}{Colors.RESET}\n")
 
 
@@ -431,21 +497,24 @@ def main():
     parser.add_argument('--model', type=str, default=None,
                         choices=['qwen-flash', 'qwen-plus', 'qwen-max'],
                         help='选择模型：qwen-flash（快速）、qwen-plus（平衡）、qwen-max（最强）')
+    parser.add_argument('--language', '--lang', type=str, default=None,
+                        choices=['zh', 'en'],
+                        help='选择语言：zh (中文) 或 en (English)')
 
     args = parser.parse_args()
 
     # 创建 Agent
-    agent = BusyAgent(model=args.model)
+    agent = BusyAgent(model=args.model, language=args.language)
 
     if args.loop:
         # 循环模式
-        print(f"{Colors.BRIGHT_CYAN}🔄 循环模式已启动，按 Ctrl+C 退出{Colors.RESET}\n")
+        print(f"{Colors.BRIGHT_CYAN}{agent._t('loop_mode_started')}{Colors.RESET}\n")
         try:
             while True:
                 agent.run(fast_mode=args.fast)
                 time.sleep(args.delay)
         except KeyboardInterrupt:
-            print(f"\n{Colors.BRIGHT_YELLOW}👋 已退出{Colors.RESET}")
+            print(f"\n{Colors.BRIGHT_YELLOW}{agent._t('exited')}{Colors.RESET}")
     else:
         # 单次运行
         agent.run(index=args.index, fast_mode=args.fast)

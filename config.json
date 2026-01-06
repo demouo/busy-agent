@@ -1,4 +1,8 @@
 {
+  "language": {
+    "default": "zh",
+    "description": "界面语言：zh (中文) 或 en (English)"
+  },
   "model": {
     "default": "qwen-plus",
     "description": "默认使用的模型",
