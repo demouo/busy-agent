@@ -109,6 +109,15 @@ class BusyAgent:
         # 设置模型（保留用于未来扩展）
         self.model = model or self.config.get('model', {}).get('default', 'qwen-plus')
 
+        # 初始化打印模式相关变量
+        self.step_counter = 0
+        self.current_print_mode = self._select_random_print_mode()
+
+    def _select_random_print_mode(self) -> str:
+        """随机选择一个打印模式"""
+        modes = ['smooth', 'chunky', 'slow', 'instant']
+        return random.choice(modes)
+
     def _t(self, key: str, **kwargs) -> str:
         """
         获取翻译文本
@@ -226,19 +235,50 @@ class BusyAgent:
 
     def typewriter_print(self, text: str, delay: float = 0.03, end: str = '\n'):
         """
-        打字机效果打印文本
+        打字机效果打印文本，支持多种打印模式
 
         Args:
             text: 要打印的文本
             delay: 每个字符的延迟时间（秒）
             end: 结束字符
         """
-        for char in text:
-            sys.stdout.write(char)
+        mode = self.current_print_mode
+
+        if mode == 'instant':
+            # 模式4：即时打印，直接输出全部
+            sys.stdout.write(text)
+            sys.stdout.write(end)
             sys.stdout.flush()
-            time.sleep(delay)
-        sys.stdout.write(end)
-        sys.stdout.flush()
+        elif mode == 'smooth':
+            # 模式1：流畅打印（当前的打字机效果）
+            for char in text:
+                sys.stdout.write(char)
+                sys.stdout.flush()
+                time.sleep(delay)
+            sys.stdout.write(end)
+            sys.stdout.flush()
+        elif mode == 'slow':
+            # 模式3：慢速打印
+            slow_delay = delay * self.config.get('print_modes', {}).get('modes', {}).get('slow', {}).get('speed_multiplier', 3.0)
+            for char in text:
+                sys.stdout.write(char)
+                sys.stdout.flush()
+                time.sleep(slow_delay)
+            sys.stdout.write(end)
+            sys.stdout.flush()
+        elif mode == 'chunky':
+            # 模式2：分片打印
+            chunk_size = self.config.get('print_modes', {}).get('modes', {}).get('chunky', {}).get('chunk_size', 15)
+            chunk_delay = self.config.get('print_modes', {}).get('modes', {}).get('chunky', {}).get('chunk_delay', 0.3)
+
+            for i in range(0, len(text), chunk_size):
+                chunk = text[i:i + chunk_size]
+                sys.stdout.write(chunk)
+                sys.stdout.flush()
+                if i + chunk_size < len(text):
+                    time.sleep(chunk_delay)
+            sys.stdout.write(end)
+            sys.stdout.flush()
 
     def loading_animation(self, message: str, duration: float = 2.0):
         """
@@ -358,6 +398,12 @@ class BusyAgent:
             step: 步骤字典 {'type': 'thought/action/observation', 'number': 1, 'content': '...'}
             fast_mode: 是否快速模式（跳过动画）
         """
+        # 增加步骤计数器并检查是否需要切换打印模式
+        self.step_counter += 1
+        switch_interval = self.config.get('print_modes', {}).get('switch_interval', 10)
+        if self.step_counter % switch_interval == 0:
+            self.current_print_mode = self._select_random_print_mode()
+
         step_type = step['type']
         step_number = step['number']
         content = step['content']

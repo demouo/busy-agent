@@ -1,63 +1,85 @@
 {
-  "language": {
-    "default": "zh",
-    "description": "界面语言：zh (中文) 或 en (English)"
-  },
-  "model": {
-    "default": "qwen-plus",
-    "description": "默认使用的模型",
-    "available_models": {
-      "qwen-flash": {
-        "display_name": "Qwen-Flash",
-        "description": "快速模型，响应迅速",
-        "tier": "flash"
-      },
-      "qwen-plus": {
-        "display_name": "Qwen-Plus",
-        "description": "平衡模型，性能与速度兼顾",
-        "tier": "plus"
-      },
-      "qwen-max": {
-        "display_name": "Qwen-Max",
-        "description": "最强模型，深度思考",
-        "tier": "max"
-      }
-    }
-  },
-  "delays": {
-    "thinking": {
-      "min": 2.0,
-      "max": 5.0,
-      "description": "思考延迟时间范围（秒）"
+    "language": {
+        "default": "zh",
+        "description": "界面语言：zh (中文) 或 en (English)"
     },
-    "executing": {
-      "min": 3.0,
-      "max": 6.0,
-      "description": "执行动作延迟时间范围（秒）"
-    }
-  },
-  "typewriter": {
-    "thought_speed": 0.02,
-    "action_speed": 0.015,
-    "observation_speed": 0.005,
-    "description": "打字机效果每个字符的延迟（秒）"
-  },
-  "display": {
-    "observation_max_length": 500,
-    "description": "观察内容的最大显示长度"
-  },
-  "incidents": {
-    "model_disconnect": {
-      "enabled": true,
-      "probability": 0.15,
-      "max_retries": 2,
-      "description": "模型断连概率和最大重试次数"
+    "model": {
+        "default": "qwen-plus",
+        "description": "默认使用的模型",
+        "available_models": {
+            "qwen-flash": {
+                "display_name": "Qwen-Flash",
+                "description": "快速模型，响应迅速",
+                "tier": "flash"
+            },
+            "qwen-plus": {
+                "display_name": "Qwen-Plus",
+                "description": "平衡模型，性能与速度兼顾",
+                "tier": "plus"
+            },
+            "qwen-max": {
+                "display_name": "Qwen-Max",
+                "description": "最强模型，深度思考",
+                "tier": "max"
+            }
+        }
     },
-    "action_timeout": {
-      "enabled": true,
-      "probability": 0.1,
-      "max_retries": 3,
-      "description": "动作超时概率和最大重试次数"
+    "delays": {
+        "thinking": {
+            "min": 2.0,
+            "max": 5.0,
+            "description": "思考延迟时间范围（秒）"
+        },
+        "executing": {
+            "min": 3.0,
+            "max": 6.0,
+            "description": "执行动作延迟时间范围（秒）"
+        }
+    },
+    "typewriter": {
+        "thought_speed": 0.02,
+        "action_speed": 0.015,
+        "observation_speed": 0.005,
+        "description": "打字机效果每个字符的延迟（秒）"
+    },
+    "display": {
+        "observation_max_length": 500,
+        "description": "观察内容的最大显示长度"
+    },
+    "print_modes": {
+        "switch_interval": 10,
+        "description": "每N步切换一次打印模式",
+        "modes": {
+            "smooth": {
+                "name": "流畅打印",
+                "speed_multiplier": 1.0
+            },
+            "chunky": {
+                "name": "分片打印",
+                "chunk_size": 15,
+                "chunk_delay": 0.3
+            },
+            "slow": {
+                "name": "慢速打印",
+                "speed_multiplier": 3.0
+            },
+            "instant": {
+                "name": "即时打印"
+            }
+        }
+    },
+    "incidents": {
+        "model_disconnect": {
+            "enabled": true,
+            "probability": 0.15,
+            "max_retries": 2,
+            "description": "模型断连概率和最大重试次数"
+        },
+        "action_timeout": {
+            "enabled": true,
+            "probability": 0.1,
+            "max_retries": 3,
+            "description": "动作超时概率和最大重试次数"
+        }
     }
-  }
 }
