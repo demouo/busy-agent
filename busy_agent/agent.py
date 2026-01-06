@@ -424,7 +424,7 @@ class BusyAgent:
             message: 加载消息
             duration: 动画持续时间（秒）
         """
-        frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        frames = ['|', '/', '-', '\\', '|', '/', '-', '\\']
         end_time = time.time() + duration
 
         while time.time() < end_time:
