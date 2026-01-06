@@ -81,5 +81,56 @@
             "max_retries": 3,
             "description": "动作超时概率和最大重试次数"
         }
+    },
+    "success_rate": {
+        "target_rate": 0.75,
+        "incident_penalty": 0.3,
+        "description": "目标成功率和意外惩罚系数",
+        "wrong_answer_strategies": {
+            "unable_to_determine": {
+                "weight": 0.4,
+                "templates": [
+                    "Unable to determine",
+                    "Cannot find sufficient information",
+                    "Insufficient data"
+                ]
+            },
+            "reasoning_failed": {
+                "weight": 0.3,
+                "templates": [
+                    "Reasoning process incomplete",
+                    "Failed to reach conclusion",
+                    "Analysis inconclusive"
+                ]
+            },
+            "wrong_guess": {
+                "weight": 0.3,
+                "description": "随机选择数据集中其他问题的答案"
+            }
+        }
+    },
+    "llm_judge": {
+        "enabled": true,
+        "score_range": {
+            "min": 0.0,
+            "max": 10.0
+        },
+        "correct_answer_score": {
+            "min": 8.5,
+            "max": 10.0
+        },
+        "wrong_answer_score": {
+            "min": 2.0,
+            "max": 6.0
+        },
+        "description": "LLM评分配置"
+    },
+    "metrics": {
+        "track_success_rate": true,
+        "track_time": true,
+        "track_steps": true,
+        "track_retries": true,
+        "track_incidents": true,
+        "description": "可观测指标跟踪配置"
     }
 }

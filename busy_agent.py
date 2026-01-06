@@ -64,6 +64,13 @@ LANGUAGES = {
         'final_answer': '✅ 最终答案: {answer}',
         'loop_mode_started': '🔄 循环模式已启动，按 Ctrl+C 退出',
         'exited': '👋 已退出',
+        'observable_metrics': '📊 可观测指标:',
+        'llm_judge_score': '🤖 LLM 评分:',
+        'overall_success_rate': '✅ 总体成功率:',
+        'time_spent': '⏱️  耗时:',
+        'total_steps': '📝 总步骤数:',
+        'incidents': '⚠️  意外事件:',
+        'retry_count': '🔄 重试次数:',
     },
     'en': {
         'loaded_data': '✓ Loaded {count} trajectory data',
@@ -85,6 +92,13 @@ LANGUAGES = {
         'final_answer': '✅ Final Answer: {answer}',
         'loop_mode_started': '🔄 Loop mode started, press Ctrl+C to exit',
         'exited': '👋 Exited',
+        'observable_metrics': '📊 Observable Metrics:',
+        'llm_judge_score': '🤖 LLM as Judge Score:',
+        'overall_success_rate': '✅ Overall Success Rate:',
+        'time_spent': '⏱️  Time Spent:',
+        'total_steps': '📝 Total Steps:',
+        'incidents': '⚠️  Incidents:',
+        'retry_count': '🔄 Retry Count:',
     }
 }
 
@@ -113,10 +127,123 @@ class BusyAgent:
         self.step_counter = 0
         self.current_print_mode = self._select_random_print_mode()
 
+        # 初始化统计信息
+        self.total_runs = 0
+        self.successful_runs = 0
+        self.failed_runs = 0
+
+        # 当前运行的统计信息
+        self.current_run_stats = {
+            'start_time': None,
+            'end_time': None,
+            'total_steps': 0,
+            'incidents_occurred': [],
+            'retry_count': 0,
+            'is_correct': False
+        }
+
     def _select_random_print_mode(self) -> str:
         """随机选择一个打印模式"""
         modes = ['smooth', 'chunky', 'slow', 'instant']
         return random.choice(modes)
+
+    def _should_answer_correctly(self) -> bool:
+        """
+        根据成功率和意外情况判断是否应该输出正确答案
+
+        Returns:
+            True 表示输出正确答案，False 表示输出错误答案
+        """
+        success_config = self.config.get('success_rate', {})
+        target_rate = success_config.get('target_rate', 0.75)
+        incident_penalty = success_config.get('incident_penalty', 0.3)
+
+        # 计算基础失败概率
+        base_failure_prob = 1.0 - target_rate
+
+        # 如果有意外发生，增加失败概率
+        if len(self.current_run_stats['incidents_occurred']) > 0:
+            failure_prob = base_failure_prob + incident_penalty
+            failure_prob = min(failure_prob, 0.95)  # 最多95%失败率
+        else:
+            failure_prob = base_failure_prob
+
+        # 随机判断
+        return random.random() > failure_prob
+
+    def _generate_fake_answer(self, correct_answer: str) -> str:
+        """
+        生成一个错误答案
+
+        Args:
+            correct_answer: 正确答案
+
+        Returns:
+            错误答案
+        """
+        success_config = self.config.get('success_rate', {})
+        strategies = success_config.get('wrong_answer_strategies', {})
+
+        # 根据权重选择策略
+        strategy_choices = []
+        weights = []
+
+        for strategy_name, strategy_config in strategies.items():
+            strategy_choices.append(strategy_name)
+            weights.append(strategy_config.get('weight', 0.33))
+
+        # 归一化权重
+        total_weight = sum(weights)
+        if total_weight > 0:
+            weights = [w / total_weight for w in weights]
+
+        chosen_strategy = random.choices(strategy_choices, weights=weights)[0]
+
+        # 根据策略生成答案
+        if chosen_strategy == 'unable_to_determine':
+            templates = strategies['unable_to_determine'].get('templates', ['Unable to determine'])
+            return random.choice(templates)
+        elif chosen_strategy == 'reasoning_failed':
+            templates = strategies['reasoning_failed'].get('templates', ['Reasoning process incomplete'])
+            return random.choice(templates)
+        elif chosen_strategy == 'wrong_guess':
+            # 随机选择数据集中其他问题的答案
+            random_idx = random.randint(0, len(self.df) - 1)
+            random_answer = self.df.iloc[random_idx]['correct_answer']
+            # 确保不是同一个答案
+            max_attempts = 10
+            attempts = 0
+            while random_answer == correct_answer and attempts < max_attempts:
+                random_idx = random.randint(0, len(self.df) - 1)
+                random_answer = self.df.iloc[random_idx]['correct_answer']
+                attempts += 1
+            return random_answer
+        else:
+            return "Unable to determine"
+
+    def _calculate_llm_judge_score(self, is_correct: bool) -> float:
+        """
+        计算 LLM as judge 评分
+
+        Args:
+            is_correct: 答案是否正确
+
+        Returns:
+            评分（0-10）
+        """
+        judge_config = self.config.get('llm_judge', {})
+
+        if not judge_config.get('enabled', True):
+            return 0.0
+
+        if is_correct:
+            score_min = judge_config.get('correct_answer_score', {}).get('min', 8.5)
+            score_max = judge_config.get('correct_answer_score', {}).get('max', 10.0)
+        else:
+            score_min = judge_config.get('wrong_answer_score', {}).get('min', 2.0)
+            score_max = judge_config.get('wrong_answer_score', {}).get('max', 6.0)
+
+        return random.uniform(score_min, score_max)
 
     def _t(self, key: str, **kwargs) -> str:
         """
@@ -323,10 +450,12 @@ class BusyAgent:
         if random.random() > disconnect_config.get('probability', 0):
             return True
 
-        # 触发断连
+        # 触发断连 - 记录意外
+        self.current_run_stats['incidents_occurred'].append('model_disconnect')
         max_retries = disconnect_config.get('max_retries', 2)
 
         for retry in range(max_retries):
+            self.current_run_stats['retry_count'] += 1
             print(f"\n{Colors.RED}{self._t('model_disconnect', model=model_name)}{Colors.RESET}")
 
             if not fast_mode:
@@ -367,10 +496,12 @@ class BusyAgent:
         if random.random() > timeout_config.get('probability', 0):
             return True
 
-        # 触发超时
+        # 触发超时 - 记录意外
+        self.current_run_stats['incidents_occurred'].append('action_timeout')
         max_retries = timeout_config.get('max_retries', 3)
 
         for retry in range(max_retries):
+            self.current_run_stats['retry_count'] += 1
             print(f"\n{Colors.RED}{self._t('action_timeout')}{Colors.RESET}")
 
             if not fast_mode:
@@ -494,6 +625,16 @@ class BusyAgent:
             index: 指定要显示的 trajectory 索引，None 表示随机选择
             fast_mode: 是否快速模式（跳过动画）
         """
+        # 初始化当前运行统计信息
+        self.current_run_stats = {
+            'start_time': time.time(),
+            'end_time': None,
+            'total_steps': 0,
+            'incidents_occurred': [],
+            'retry_count': 0,
+            'is_correct': False
+        }
+
         # 选择一个 trajectory
         if index is None:
             index = random.randint(0, len(self.df) - 1)
@@ -519,16 +660,80 @@ class BusyAgent:
             print(f"{Colors.RED}错误: 无法解析 trajectory{Colors.RESET}")
             return
 
+        # 统计步骤数
+        self.current_run_stats['total_steps'] = len(steps)
+
+        # 找到最后一个 Action 步骤（包含 Finish[...]）
+        last_action_index = -1
+        for i, step in enumerate(steps):
+            if step['type'] == 'action' and 'Finish[' in step['content']:
+                last_action_index = i
+
         # 逐步打印
         print(f"{Colors.BOLD}{Colors.BRIGHT_WHITE}{self._t('start_reasoning')}{Colors.RESET}\n")
 
         for step in steps:
             self.print_step(step, fast_mode=fast_mode)
 
-        # 显示最终答案
+        # 判断答案是否正确
+        is_correct = self._should_answer_correctly()
+        self.current_run_stats['is_correct'] = is_correct
+
+        # 确定最终显示的答案
+        if is_correct:
+            final_answer = correct_answer
+        else:
+            final_answer = self._generate_fake_answer(correct_answer)
+
+        # 记录统计信息
+        self.current_run_stats['end_time'] = time.time()
+        self.total_runs += 1
+        if is_correct:
+            self.successful_runs += 1
+        else:
+            self.failed_runs += 1
+
+        # 计算 LLM judge 评分
+        llm_judge_score = self._calculate_llm_judge_score(is_correct)
+
+        # 显示最终答案和指标
         print(f"\n{Colors.BOLD}{Colors.BRIGHT_GREEN}{'=' * 80}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{self._t('final_answer', answer=correct_answer)}{Colors.RESET}")
+        print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{self._t('final_answer', answer=final_answer)}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{'=' * 80}{Colors.RESET}\n")
+
+        # 显示可观测指标
+        metrics_config = self.config.get('metrics', {})
+
+        print(f"{Colors.BOLD}{Colors.BRIGHT_CYAN}{self._t('observable_metrics')}{Colors.RESET}\n")
+
+        # LLM as Judge 评分
+        if metrics_config.get('track_success_rate', True):
+            print(f"{Colors.CYAN}{self._t('llm_judge_score')} {Colors.BRIGHT_WHITE}{llm_judge_score:.2f}/10.0{Colors.RESET}")
+
+        # 成功率
+        if metrics_config.get('track_success_rate', True) and self.total_runs > 0:
+            success_rate = (self.successful_runs / self.total_runs) * 100
+            print(f"{Colors.CYAN}{self._t('overall_success_rate')} {Colors.BRIGHT_WHITE}{success_rate:.1f}% ({self.successful_runs}/{self.total_runs}){Colors.RESET}")
+
+        # 时间统计
+        if metrics_config.get('track_time', True):
+            elapsed_time = self.current_run_stats['end_time'] - self.current_run_stats['start_time']
+            print(f"{Colors.CYAN}{self._t('time_spent')} {Colors.BRIGHT_WHITE}{elapsed_time:.2f}s{Colors.RESET}")
+
+        # 步骤数
+        if metrics_config.get('track_steps', True):
+            print(f"{Colors.CYAN}{self._t('total_steps')} {Colors.BRIGHT_WHITE}{self.current_run_stats['total_steps']}{Colors.RESET}")
+
+        # 意外事件
+        if metrics_config.get('track_incidents', True) and len(self.current_run_stats['incidents_occurred']) > 0:
+            incidents_str = ', '.join(self.current_run_stats['incidents_occurred'])
+            print(f"{Colors.CYAN}{self._t('incidents')} {Colors.BRIGHT_WHITE}{incidents_str}{Colors.RESET}")
+
+        # 重试次数
+        if metrics_config.get('track_retries', True) and self.current_run_stats['retry_count'] > 0:
+            print(f"{Colors.CYAN}{self._t('retry_count')} {Colors.BRIGHT_WHITE}{self.current_run_stats['retry_count']}{Colors.RESET}")
+
+        print()  # 空行
 
 
 def main():
